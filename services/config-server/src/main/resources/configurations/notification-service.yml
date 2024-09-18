@@ -1,0 +1,37 @@
+spring:
+  data:
+    mongodb:
+      username: jaytech
+      password: jaytech
+      host: localhost
+      port: 27017
+      database: customer
+      authentication-database: admin
+  kafka:
+    consumer:
+      bootstrap-servers: localhost:9092
+      group-id: paymentGroup,orderGroup
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringSerializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.trusted.packages: 'com.jaytech.ecommerce'
+        spring.json.type.mapping: orderConfirmation:com.jaytech.ecommerce.kafka.OrderConfirmation,paymentConfirmation:package com.jaytech.payment.notification.PaymentNotificationRequest
+  mail:
+    host: localhost
+    port: 1025
+    username: jaytech
+    password: jaytech
+    properties:
+      mail:
+        smtp:
+          trust: "*"
+        auth: true
+        starttls:
+          enabled: true
+        connectiontimeout: 50000
+        timeout: 3000
+        writetimeout: 5000
+
+server:
+  port: 8040
