@@ -2,13 +2,19 @@ package com.jaytech.ecommerce.order;
 
 import com.jaytech.ecommerce.customer.CustomerClient;
 import com.jaytech.ecommerce.exception.BusinessException;
+import com.jaytech.ecommerce.kafka.OrderConfirmation;
+import com.jaytech.ecommerce.kafka.OrderProducer;
 import com.jaytech.ecommerce.orderline.OrderLineRequest;
 import com.jaytech.ecommerce.orderline.OrderLineService;
 import com.jaytech.ecommerce.product.ProductClient;
 import com.jaytech.ecommerce.product.PurchaseRequest;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -19,13 +25,14 @@ public class OrderService {
     private final OrderRespo repo;
     private final OrderMapper mapper;
     private final OrderLineService orderLineService;
+    private final OrderProducer orderProducer;
 
     public Integer createOrder(@Valid OrderRequest request) {
 //        Check customer --> OpenFeign
         var customer = this.customerClient.findCustomerById(request.customerId())
                 .orElseThrow(() -> new BusinessException("Cannot create order:: No Customer exists with the provided ID:: " + request.customerId()));
 //        purchase the product --> product microservice (RestTemplate)
-        this.productClient.purchaseProducts(request.products());
+        var purchaseProducts = this.productClient.purchaseProducts(request.products());
 //        persist order
         var order = this.repo.save(mapper.toOrder(request));
 //        persit orderline
@@ -41,6 +48,29 @@ public class OrderService {
         }
 //        start payment process
 //        send the order confirmation --> notification microservice (kafka)
-        return null;
+        orderProducer.sendOrderConfirmation(
+                new OrderConfirmation(
+                        request.refrence(),
+                        request.amount(),
+                        request.paymentMethod(),
+                        customer,
+                        purchaseProducts
+                )
+        );
+
+        return order.getId();
+    }
+
+    public List<OrderResponse> findAll() {
+        return repo.findAll()
+                .stream()
+                .map(mapper::fromOrder)
+                .collect(Collectors.toList());
+    }
+
+    public OrderResponse findById(Integer orderId) {
+        return repo.findById(orderId)
+                .map(mapper::fromOrder)
+                .orElseThrow(() -> new EntityNotFoundException(String.format("No order found with the provided ID:: %d"+ orderId)));
     }
 }

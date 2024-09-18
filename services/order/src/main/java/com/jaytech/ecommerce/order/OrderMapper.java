@@ -15,4 +15,14 @@ public class OrderMapper {
                 .paymentMethod(request.paymentMethod())
                 .build();
     }
+
+    public OrderResponse fromOrder(Order order) {
+        return new OrderResponse(
+                order.getId(),
+                order.getRefrence(),
+                order.getTotalAmount(),
+                order.getPaymentMethod(),
+                order.getCustomeId()
+        );
+    }
 }
