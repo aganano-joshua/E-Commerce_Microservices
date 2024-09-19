@@ -1,28 +1,31 @@
 package com.jaytech.ecommerce.order;
 
-import jakarta.validation.Valid;
 import org.springframework.stereotype.Service;
 
 @Service
 public class OrderMapper {
 
-    public Order toOrder(@Valid OrderRequest request) {
-        return Order.builder()
-                .id(request.id())
-                .customeId(request.customerId())
-                .refrence(request.refrence())
-                .totalAmount(request.amount())
-                .paymentMethod(request.paymentMethod())
-                .build();
-    }
 
-    public OrderResponse fromOrder(Order order) {
-        return new OrderResponse(
-                order.getId(),
-                order.getRefrence(),
-                order.getTotalAmount(),
-                order.getPaymentMethod(),
-                order.getCustomeId()
-        );
+  public Order toOrder(OrderRequest request) {
+    if (request == null) {
+      return null;
     }
+    return Order.builder()
+        .id(request.id())
+        .totalAmount(request.amount())
+        .reference(request.reference())
+        .paymentMethod(request.paymentMethod())
+        .customerId(request.customerId())
+        .build();
+  }
+
+  public OrderResponse fromOrder(Order order) {
+    return new OrderResponse(
+        order.getId(),
+        order.getReference(),
+        order.getTotalAmount(),
+        order.getPaymentMethod(),
+        order.getCustomerId()
+    );
+  }
 }

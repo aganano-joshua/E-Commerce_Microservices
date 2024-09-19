@@ -11,9 +11,9 @@ import com.jaytech.ecommerce.payment.PaymentRequest;
 import com.jaytech.ecommerce.product.ProductClient;
 import com.jaytech.ecommerce.product.PurchaseRequest;
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -22,24 +22,24 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class OrderService {
 
-    private final CustomerClient customerClient;
-    private final ProductClient productClient;
-    private final OrderRespo repo;
+    private final OrderRepository repository;
     private final OrderMapper mapper;
+    private final CustomerClient customerClient;
+    private final PaymentClient paymentClient;
+    private final ProductClient productClient;
     private final OrderLineService orderLineService;
     private final OrderProducer orderProducer;
-    private final PaymentClient paymentClient;
 
-    public Integer createOrder(@Valid OrderRequest request) {
-//        Check customer --> OpenFeign
+    @Transactional
+    public Integer createOrder(OrderRequest request) {
         var customer = this.customerClient.findCustomerById(request.customerId())
-                .orElseThrow(() -> new BusinessException("Cannot create order:: No Customer exists with the provided ID:: " + request.customerId()));
-//        purchase the product --> product microservice (RestTemplate)
-        var purchaseProducts = this.productClient.purchaseProducts(request.products());
-//        persist order
-        var order = this.repo.save(mapper.toOrder(request));
-//        persit orderline
-        for (PurchaseRequest purchaseRequest: request.products()) {
+                .orElseThrow(() -> new BusinessException("Cannot create order:: No customer exists with the provided ID"));
+
+        var purchasedProducts = productClient.purchaseProducts(request.products());
+
+        var order = this.repository.save(mapper.toOrder(request));
+
+        for (PurchaseRequest purchaseRequest : request.products()) {
             orderLineService.saveOrderLine(
                     new OrderLineRequest(
                             null,
@@ -49,42 +49,38 @@ public class OrderService {
                     )
             );
         }
-//        start payment process
-
         var paymentRequest = new PaymentRequest(
                 request.amount(),
                 request.paymentMethod(),
                 order.getId(),
-                order.getRefrence(),
+                order.getReference(),
                 customer
         );
         paymentClient.requestOrderPayment(paymentRequest);
 
-
-//        send the order confirmation --> notification microservice (kafka)
         orderProducer.sendOrderConfirmation(
                 new OrderConfirmation(
-                        request.refrence(),
+                        request.reference(),
                         request.amount(),
                         request.paymentMethod(),
                         customer,
-                        purchaseProducts
+                        purchasedProducts
                 )
         );
 
         return order.getId();
     }
 
-    public List<OrderResponse> findAll() {
-        return repo.findAll()
+    public List<OrderResponse> findAllOrders() {
+        return this.repository.findAll()
                 .stream()
-                .map(mapper::fromOrder)
+                .map(this.mapper::fromOrder)
                 .collect(Collectors.toList());
     }
 
-    public OrderResponse findById(Integer orderId) {
-        return repo.findById(orderId)
-                .map(mapper::fromOrder)
-                .orElseThrow(() -> new EntityNotFoundException(String.format("No order found with the provided ID:: %d"+ orderId)));
+    public OrderResponse findById(Integer id) {
+        return this.repository.findById(id)
+                .map(this.mapper::fromOrder)
+                .orElseThrow(() -> new EntityNotFoundException(String.format("No order found with the provided ID: %d", id)));
     }
 }

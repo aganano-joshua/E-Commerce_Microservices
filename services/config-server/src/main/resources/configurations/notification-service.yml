@@ -3,8 +3,8 @@ server:
 spring:
   data:
     mongodb:
-      username: postgres
-      password: password
+      username: jaytech
+      password: jaytech
       host: localhost
       port: 27017
       database: notification
@@ -15,10 +15,10 @@ spring:
       group-id: paymentGroup,orderGroup
       auto-offset-reset: earliest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
       properties:
         spring.json.trusted.packages: '*'
-        spring.json.type.mapping: orderConfirmation:com.jaytech.ecommerce.kafka.order.OrderConfirmation,paymentConfirmation:com.jaytech.notification.kafka.payment.PaymentConfirmation
+        spring.json.type.mapping: orderConfirmation:com.jaytech.ecommerce.kafka.order.OrderConfirmation,paymentConfirmation:com.jaytech.ecommerce.kafka.payment.PaymentConfirmation
   mail:
     host: localhost
     port: 1025

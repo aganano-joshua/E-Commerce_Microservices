@@ -5,16 +5,16 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class OrderLineMapper {
-    public OrderLine toOrderLine(OrderLineRequest orderLineRequest) {
+    public OrderLine toOrderLine(OrderLineRequest request) {
         return OrderLine.builder()
-                .id(orderLineRequest.id())
-                .quantity(orderLineRequest.quantity())
+                .id(request.orderId())
+                .productId(request.productId())
                 .order(
                         Order.builder()
-                                .id(orderLineRequest.id())
+                                .id(request.orderId())
                                 .build()
                 )
-                .productId(orderLineRequest.productId())
+                .quantity(request.quantity())
                 .build();
     }
 
