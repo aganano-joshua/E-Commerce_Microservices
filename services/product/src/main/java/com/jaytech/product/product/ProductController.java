@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/product")
+@RequestMapping("/api/v1/products")
 @RequiredArgsConstructor
 public class ProductController {
 
@@ -17,21 +17,21 @@ public class ProductController {
     @PostMapping
     public ResponseEntity<Integer> createProduct(
             @RequestBody @Valid ProductRequest request
-    ){
+    ) {
         return ResponseEntity.ok(service.createProduct(request));
     }
 
     @PostMapping("/purchase")
-    public ResponseEntity<List<ProductPurchaseResponse>> purchaseProduct(
+    public ResponseEntity<List<ProductPurchaseResponse>> purchaseProducts(
             @RequestBody List<ProductPurchaseRequest> request
-    ){
+    ) {
         return ResponseEntity.ok(service.purchaseProducts(request));
     }
 
-    @GetMapping("/{product_id}")
+    @GetMapping("/{product-id}")
     public ResponseEntity<ProductRessponse> findById(
-            @PathVariable("product_id") Integer productId
-    ){
+            @PathVariable("product-id") Integer productId
+    ) {
         return ResponseEntity.ok(service.findById(productId));
     }
 
@@ -39,5 +39,4 @@ public class ProductController {
     public ResponseEntity<List<ProductRessponse>> findAll() {
         return ResponseEntity.ok(service.findAll());
     }
-
 }

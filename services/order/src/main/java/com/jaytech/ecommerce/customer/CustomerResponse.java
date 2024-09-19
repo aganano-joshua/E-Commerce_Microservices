@@ -1,9 +1,10 @@
 package com.jaytech.ecommerce.customer;
 
 public record CustomerResponse(
-        String id,
-        String firstname,
-        String lastname,
-        String email
+    String id,
+    String firstname,
+    String lastname,
+    String email
 ) {
+
 }
